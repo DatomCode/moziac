@@ -3,29 +3,37 @@ import { useAppStore } from '../../store/useAppStore';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-function cn(...inputs) {
-  return twMerge(clsx(inputs));
-}
+function cn(...inputs) { return twMerge(clsx(inputs)); }
 
 export default function TaskItem({ task, onClick }) {
-  const projects = useAppStore(state => state.projects);
+  const { projects, completeTask, activeTaskId } = useAppStore();
   const project = projects.find(p => p.id === task.projectId);
   const isDone = task.status === 'done';
   const isInProgress = task.status === 'in_progress';
+  const isActive = activeTaskId === task.id;
+
+  const handleStatusClick = (e) => {
+    e.stopPropagation();
+    completeTask(task.id);
+  };
 
   return (
     <div 
       onClick={onClick}
       className={cn(
-        "group flex items-center px-4 py-3 rounded-lg border border-transparent hover:border-slate-200 hover:bg-slate-50 hover:shadow-sm cursor-pointer transition-all",
-        isDone && "opacity-60 hover:opacity-100"
+        "group flex items-center px-4 py-3 rounded-lg border border-transparent hover:border-slate-200 cursor-pointer transition-all",
+        isDone ? "opacity-60 hover:opacity-100" : "",
+        isActive ? "bg-slate-50 border-slate-200 shadow-sm ring-1 ring-[#185FA5]/20" : "hover:bg-slate-50"
       )}
     >
-      <div className="mr-4 shrink-0 mt-0.5 self-start">
+      <div 
+        className="mr-4 shrink-0 mt-0.5 self-start cursor-pointer" 
+        onClick={handleStatusClick}
+      >
         {isDone ? (
           <CheckCircle2 size={20} className="text-[#185FA5] fill-blue-50" />
         ) : isInProgress ? (
-          <div className="relative w-5 h-5 rounded-full border-2 border-[#185FA5] overflow-hidden">
+          <div className="relative w-5 h-5 rounded-full border-2 border-[#185FA5] overflow-hidden hover:bg-blue-50 transition-colors">
             <div className="absolute inset-0 bg-[#185FA5] w-1/2 h-full" />
           </div>
         ) : (
@@ -41,7 +49,7 @@ export default function TaskItem({ task, onClick }) {
           {task.title}
         </h4>
         <div className="flex items-center gap-3 text-xs text-slate-500">
-          <span>{task.dueDate === '2026-06-19' ? 'Today' : 'Jun 21'}</span>
+          <span>{task.dueDate === '2026-06-19' ? 'Today' : task.dueDate}</span>
           
           {task.priority === 'urgent' && (
             <span className="flex items-center gap-1 text-red-600 bg-red-50 px-1.5 py-0.5 rounded font-medium">
@@ -50,6 +58,9 @@ export default function TaskItem({ task, onClick }) {
           )}
           {task.priority === 'medium' && (
             <span className="px-1.5 py-0.5 rounded text-orange-600 bg-orange-50 font-medium">Medium</span>
+          )}
+          {task.priority === 'high' && (
+            <span className="px-1.5 py-0.5 rounded text-pink-600 bg-pink-50 font-medium">High</span>
           )}
 
           {task.linkedNoteId && (

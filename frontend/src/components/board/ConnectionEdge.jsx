@@ -21,19 +21,19 @@ export default function ConnectionEdge({
     targetPosition,
   });
 
-  const color = data?.color || '#38bdf8';
+  const color = data?.color || '#a09080';
 
   return (
     <>
       <path
         id={id}
-        style={{ ...style, stroke: color, strokeWidth: 2, strokeDasharray: '6, 6' }}
+        style={{ ...style, stroke: color, strokeWidth: 1.5, strokeDasharray: '6, 6' }}
         className="react-flow__edge-path"
         d={edgePath}
         markerEnd={markerEnd}
       />
-      <circle cx={sourceX} cy={sourceY} fill={color} r={3.5} />
-      <circle cx={targetX} cy={targetY} fill={color} r={3.5} />
+      <circle cx={sourceX} cy={sourceY} fill={color} r={3} />
+      <circle cx={targetX} cy={targetY} fill={color} r={3} />
     </>
   );
 }

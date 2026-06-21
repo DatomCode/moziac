@@ -1,4 +1,4 @@
-import { Layout, Plus, Grid } from 'lucide-react';
+import { ChevronRight, Grid } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -6,14 +6,17 @@ import { twMerge } from 'tailwind-merge';
 function cn(...inputs) { return twMerge(clsx(inputs)); }
 
 export default function LeftRail() {
-  const { collections, activeBoardId, setActiveBoard } = useAppStore();
+  const { collections, activeBoardId, setActiveBoard, toggleSidebar } = useAppStore();
   const activeCollection = collections.find(c => c.boards.some(b => b.id === activeBoardId)) || collections[0];
 
   return (
-    <div className="w-[44px] h-full bg-black/20 border-r border-[#1e2a3a] flex flex-col items-center py-4 shrink-0 z-10">
-      <div className="w-8 h-8 rounded bg-slate-800 flex items-center justify-center text-slate-300 mb-6 cursor-pointer hover:text-white transition-colors">
-        <Layout size={18} />
-      </div>
+    <div className="w-[44px] h-full flex flex-col items-center py-4 shrink-0 z-10 border-r border-[#e5e0d8]" style={{ backgroundColor: 'rgba(255,255,255,0.6)' }}>
+      <button 
+        onClick={toggleSidebar}
+        className="w-8 h-8 rounded bg-white border border-[#e5e0d8] shadow-sm flex items-center justify-center text-[#1a1a1a] mb-6 cursor-pointer hover:bg-slate-50 transition-colors"
+      >
+        <ChevronRight size={18} />
+      </button>
       
       <div className="flex-1 w-full flex flex-col items-center gap-3">
         {activeCollection.boards.map(board => {
@@ -24,20 +27,14 @@ export default function LeftRail() {
               onClick={() => setActiveBoard(board.id)}
               className={cn(
                 "w-8 h-8 rounded flex items-center justify-center transition-all relative group",
-                isActive ? "bg-blue-600 text-white" : "text-slate-500 hover:bg-white/10 hover:text-slate-300"
+                isActive ? "bg-[#185FA5] text-white shadow-md" : "text-[#6b6b6b] hover:bg-white/60 hover:text-[#1a1a1a]"
               )}
               title={board.name}
             >
               <Grid size={16} />
-              {isActive && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 bg-white rounded-r-full -ml-[6px]" />
-              )}
             </button>
           )
         })}
-        <div className="w-8 h-8 rounded border border-dashed border-slate-600 flex items-center justify-center text-slate-500 cursor-pointer hover:bg-white/5 hover:text-slate-300 hover:border-slate-400 transition-all mt-2">
-          <Plus size={16} />
-        </div>
       </div>
     </div>
   );

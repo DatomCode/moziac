@@ -33,6 +33,8 @@ const dummyTasks = [
     priority: 'medium',
     dueDate: '2026-06-19',
     linkedNoteId: null,
+    tags: ['backend', 'setup'],
+    subtasks: [{ id: 1, title: 'Install deps', done: true }]
   },
   {
     id: 2,
@@ -42,6 +44,8 @@ const dummyTasks = [
     priority: 'urgent',
     dueDate: '2026-06-19',
     linkedNoteId: 1,
+    tags: [],
+    subtasks: []
   },
   {
     id: 3,
@@ -51,6 +55,8 @@ const dummyTasks = [
     priority: 'medium',
     dueDate: '2026-06-19',
     linkedNoteId: null,
+    tags: ['design'],
+    subtasks: []
   },
   {
     id: 4,
@@ -60,6 +66,8 @@ const dummyTasks = [
     priority: 'low',
     dueDate: '2026-06-21',
     linkedNoteId: null,
+    tags: [],
+    subtasks: []
   }
 ];
 
@@ -67,43 +75,25 @@ const dummyNotes = [
   {
     id: '1',
     position: { x: 250, y: 150 },
-    data: {
-      color: '#facc15',
-      category: 'Core feature',
-      content: 'Spatial canvas where notes connect to tasks directly',
-      tag: 'board'
-    },
+    data: { color: '#facc15', category: 'Core feature', content: 'Spatial canvas where notes connect to tasks directly', tag: 'board', width: 220 },
     type: 'noteNode'
   },
   {
     id: '2',
     position: { x: 600, y: 100 },
-    data: {
-      color: '#38bdf8',
-      category: 'Design',
-      content: 'Dark canvas, graph paper grid, glowing notes per category'
-    },
+    data: { color: '#38bdf8', category: 'Design', content: 'Dark canvas, graph paper grid, glowing notes per category', width: 220 },
     type: 'noteNode'
   },
   {
     id: '3',
     position: { x: 650, y: 350 },
-    data: {
-      color: '#4ade80',
-      category: 'Backend',
-      content: 'Django REST + Supabase auth, deploy on Render'
-    },
+    data: { color: '#4ade80', category: 'Backend', content: 'Django REST + Supabase auth, deploy on Render', width: 220 },
     type: 'noteNode'
   },
   {
     id: '4',
     position: { x: 950, y: 200 },
-    data: {
-      color: '#f472b6',
-      category: 'Mobile',
-      content: 'React Native + Expo, same Django API',
-      linkedTaskId: 2
-    },
+    data: { color: '#f472b6', category: 'Mobile', content: 'React Native + Expo, same Django API', linkedTaskId: 2, width: 220 },
     type: 'noteNode'
   }
 ];
@@ -117,6 +107,12 @@ const dummyEdges = [
 export const useAppStore = create((set, get) => ({
   currentMode: 'home', // 'home', 'board', 'task'
   activeBoardId: 1,
+  activeView: 'today',
+  activeTaskId: null,
+  activeTool: 'select',
+  activeNoteColor: '#facc15',
+  sidebarOpen: false,
+  searchQuery: '',
   
   collections: dummyCollections,
   projects: dummyProjects,
@@ -126,13 +122,62 @@ export const useAppStore = create((set, get) => ({
   
   setMode: (mode) => set({ currentMode: mode }),
   setActiveBoard: (boardId) => set({ activeBoardId: boardId, currentMode: 'board' }),
+  setActiveView: (view) => set({ activeView: view }),
+  setActiveTaskId: (id) => set({ activeTaskId: id }),
+  setActiveTool: (tool) => set({ activeTool: tool }),
+  setActiveNoteColor: (color) => set({ activeNoteColor: color }),
+  toggleSidebar: () => set(state => ({ sidebarOpen: !state.sidebarOpen })),
+  setSearchQuery: (query) => set({ searchQuery: query }),
   
   addTask: (task) => set((state) => ({ tasks: [...state.tasks, { ...task, id: Date.now() }] })),
   updateTask: (taskId, updates) => set((state) => ({
     tasks: state.tasks.map(t => t.id === taskId ? { ...t, ...updates } : t)
   })),
-  
+  deleteTask: (taskId) => set(state => ({
+    tasks: state.tasks.filter(t => t.id !== taskId),
+    activeTaskId: state.activeTaskId === taskId ? null : state.activeTaskId
+  })),
+  completeTask: (taskId) => set(state => ({
+    tasks: state.tasks.map(t => {
+      if (t.id === taskId) {
+        const next = t.status === 'not_started' ? 'in_progress' : t.status === 'in_progress' ? 'done' : 'not_started';
+        return { ...t, status: next };
+      }
+      return t;
+    })
+  })),
+
+  addProject: (project) => set(state => ({ projects: [...state.projects, { ...project, id: Date.now() }] })),
+  deleteProject: (projectId) => set(state => ({
+    projects: state.projects.filter(p => p.id !== projectId),
+    tasks: state.tasks.map(t => t.projectId === projectId ? { ...t, projectId: null } : t),
+    activeView: state.activeView === projectId ? 'today' : state.activeView
+  })),
+
+  addNote: (note) => set(state => ({ notes: [...state.notes, { ...note, id: Date.now().toString() }] })),
+  updateNote: (noteId, updates) => set((state) => ({
+    notes: state.notes.map(n => n.id === noteId ? { ...n, ...updates } : n)
+  })),
+  deleteNote: (noteId) => set(state => ({
+    notes: state.notes.filter(n => n.id !== noteId),
+    edges: state.edges.filter(e => e.source !== noteId && e.target !== noteId)
+  })),
   updateNotePosition: (noteId, position) => set((state) => ({
     notes: state.notes.map(n => n.id === noteId ? { ...n, position } : n)
   })),
+
+  addConnection: (edge) => set(state => ({ edges: [...state.edges, { ...edge, id: `e${Date.now()}` }] })),
+  deleteConnection: (edgeId) => set(state => ({ edges: state.edges.filter(e => e.id !== edgeId) })),
+
+  addCollection: (name) => set(state => ({
+    collections: [...state.collections, { id: Date.now(), name, boards: [] }]
+  })),
+  addBoard: (collectionId, name) => set(state => ({
+    collections: state.collections.map(c => {
+      if (c.id === collectionId) {
+        return { ...c, boards: [...c.boards, { id: Date.now(), name, noteCount: 0 }] };
+      }
+      return c;
+    })
+  }))
 }));

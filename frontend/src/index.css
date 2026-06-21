@@ -29,6 +29,28 @@
   background-position: center center;
 }
 
+.graph-paper-light-bg {
+  background-color: #f5f0e8;
+  background-image: 
+    linear-gradient(to right, #e0d8cc 0.5px, transparent 0.5px),
+    linear-gradient(to bottom, #e0d8cc 0.5px, transparent 0.5px),
+    linear-gradient(to right, #c8bfb0 1px, transparent 1px),
+    linear-gradient(to bottom, #c8bfb0 1px, transparent 1px);
+  background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+  background-position: center center;
+}
+
+.notebook-ruled-lines {
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 23.5px,
+    #e8e8f0 23.5px,
+    #e8e8f0 24px
+  );
+  background-position: 0 0;
+  background-size: 100% 24px;
+}
+
 .glass-pill {
   @apply backdrop-blur-md bg-black/60 border border-white/10 shadow-lg rounded-full flex items-center p-1;
 }
