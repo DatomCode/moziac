@@ -1,18 +1,22 @@
 import { ReactFlow, Controls, useNodesState, useEdgesState, useReactFlow, ReactFlowProvider } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import NoteNode from './NoteNode';
+import TextNode from './TextNode';
 import ConnectionEdge from './ConnectionEdge';
+import EdgeEditPopover from './EdgeEditPopover';
+import FloatingFormattingBar from './FloatingFormattingBar';
 import { useAppStore } from '../../store/useAppStore';
 import { useEffect, useState, useCallback } from 'react';
+import { useOnViewportChange } from '@xyflow/react';
 
-const nodeTypes = { noteNode: NoteNode };
+const nodeTypes = { noteNode: NoteNode, textNode: TextNode };
 const edgeTypes = { connectionEdge: ConnectionEdge };
 
 function BoardCanvasInner() {
   const { 
-    notes, edges: storeEdges, updateNotePosition, 
+    notes, edges: storeEdges, updateNotePosition, updateNote, updateTextNode,
     activeTool, setActiveTool, activeNoteColor, activeBoardId, 
-    addNote, addConnection, deleteNote, deleteConnection 
+    addNote, addTextNode, addConnection, deleteNote, deleteConnection 
   } = useAppStore();
   
   const { screenToFlowPosition } = useReactFlow();
@@ -38,8 +42,25 @@ function BoardCanvasInner() {
 
   const handleNodeDragStop = (event, node) => updateNotePosition(node.id, node.position);
 
-  const onPaneClick = () => {
+  const [edgePopover, setEdgePopover] = useState(null);
+
+  const onPaneClick = (event) => {
     if (activeTool === 'connect') setConnectSource(null);
+    setEdgePopover(null);
+    if (activeTool === 'text') {
+      const position = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+      addTextNode({
+        boardId: activeBoardId,
+        type: 'textNode',
+        position,
+        data: { content: '', width: 120, height: 40 }
+      });
+      setActiveTool('select');
+    }
+  };
+
+  const onEdgeClick = (event, edge) => {
+    setEdgePopover({ id: edge.id, x: event.clientX, y: event.clientY });
   };
 
   const onNodeClick = (event, node) => {
@@ -120,7 +141,7 @@ function BoardCanvasInner() {
       }
     });
 
-    setActiveTool('select');
+    setActiveTool('text');
   };
 
   let drawRect = null;
@@ -131,6 +152,25 @@ function BoardCanvasInner() {
     const height = Math.max(drawStart.y, drawCurrent.y) - top;
     drawRect = { left, top, width, height };
   }
+
+  const selectedNodes = nodes.filter(n => n.selected);
+  const activeNode = selectedNodes.length === 1 ? selectedNodes[0] : null;
+  const [formattingRect, setFormattingRect] = useState(null);
+
+  const updateFormattingRect = useCallback(() => {
+    if (!activeNode) {
+      setFormattingRect(null);
+      return;
+    }
+    const el = document.querySelector(`[data-id="${activeNode.id}"]`);
+    if (el) setFormattingRect(el.getBoundingClientRect());
+  }, [activeNode]);
+
+  useEffect(() => { updateFormattingRect(); }, [activeNode, updateFormattingRect]);
+  useOnViewportChange({ onChange: updateFormattingRect });
+
+  const selectedEdges = edges.filter(e => e.selected);
+  const activeEdge = selectedEdges.length === 1 ? selectedEdges[0] : null;
 
   return (
     <div 
@@ -148,6 +188,7 @@ function BoardCanvasInner() {
         onEdgesChange={onEdgesChange}
         onNodeDragStop={handleNodeDragStop}
         onNodeClick={onNodeClick}
+        onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
@@ -178,6 +219,25 @@ function BoardCanvasInner() {
             borderColor: activeNoteColor,
             backgroundColor: `${activeNoteColor}15`
           }}
+        />
+      )}
+
+      {activeNode && formattingRect && (activeNode.type === 'noteNode' || activeNode.type === 'textNode') && (
+        <FloatingFormattingBar 
+          nodeRect={formattingRect} 
+          data={activeNode.data}
+          onChange={(changes) => {
+            if (activeNode.type === 'noteNode') updateNote(activeNode.id, changes);
+            if (activeNode.type === 'textNode') updateTextNode(activeNode.id, changes);
+          }}
+        />
+      )}
+
+      {activeEdge && edgePopover && activeEdge.id === edgePopover.id && (
+        <EdgeEditPopover 
+          edgeId={activeEdge.id} 
+          position={{ x: edgePopover.x, y: edgePopover.y }}
+          onClose={() => setEdgePopover(null)} 
         />
       )}
     </div>

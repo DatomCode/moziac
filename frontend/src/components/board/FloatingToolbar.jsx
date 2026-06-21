@@ -1,4 +1,4 @@
-import { MousePointer2, Square, GitCommit, Trash2 } from 'lucide-react';
+import { MousePointer2, Square, GitCommit, Trash2, Type } from 'lucide-react';
 import { useAppStore } from '../../store/useAppStore';
 import { useState } from 'react';
 import ColorPickerPopover from './ColorPickerPopover';
@@ -28,6 +28,7 @@ export default function FloatingToolbar() {
       <div className="bg-white px-4 py-2 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-[#e5e0d8] flex items-center gap-2 relative">
         <ToolBtn id="select" icon={MousePointer2} />
         <ToolBtn id="draw" icon={Square} />
+        <ToolBtn id="text" icon={Type} />
         <ToolBtn id="connect" icon={GitCommit} />
         
         <div className="w-px h-6 bg-slate-200 mx-1" />

@@ -99,9 +99,18 @@ const dummyNotes = [
 ];
 
 const dummyEdges = [
-  { id: 'e1-2', source: '1', target: '2', type: 'connectionEdge', data: { color: '#facc15' } },
-  { id: 'e1-3', source: '1', target: '3', type: 'connectionEdge', data: { color: '#facc15' } },
-  { id: 'e2-4', source: '2', target: '4', type: 'connectionEdge', data: { color: '#38bdf8' } }
+  { 
+    id: 'e1-2', source: '1', target: '2', type: 'connectionEdge', 
+    data: { color: '#facc15', lineType: 'bezier', lineStyle: 'solid', thickness: 2, arrowStyle: 'none' } 
+  },
+  { 
+    id: 'e1-3', source: '1', target: '3', type: 'connectionEdge', 
+    data: { color: '#facc15', lineType: 'bezier', lineStyle: 'solid', thickness: 2, arrowStyle: 'none' } 
+  },
+  { 
+    id: 'e2-4', source: '2', target: '4', type: 'connectionEdge', 
+    data: { color: '#38bdf8', lineType: 'bezier', lineStyle: 'solid', thickness: 2, arrowStyle: 'none' } 
+  }
 ];
 
 export const useAppStore = create((set, get) => ({
@@ -156,7 +165,7 @@ export const useAppStore = create((set, get) => ({
 
   addNote: (note) => set(state => ({ notes: [...state.notes, { ...note, id: Date.now().toString() }] })),
   updateNote: (noteId, updates) => set((state) => ({
-    notes: state.notes.map(n => n.id === noteId ? { ...n, ...updates } : n)
+    notes: state.notes.map(n => n.id === noteId ? { ...n, data: { ...n.data, ...updates } } : n)
   })),
   deleteNote: (noteId) => set(state => ({
     notes: state.notes.filter(n => n.id !== noteId),
@@ -167,7 +176,15 @@ export const useAppStore = create((set, get) => ({
   })),
 
   addConnection: (edge) => set(state => ({ edges: [...state.edges, { ...edge, id: `e${Date.now()}` }] })),
+  updateConnectionStyle: (edgeId, updates) => set(state => ({
+    edges: state.edges.map(e => e.id === edgeId ? { ...e, data: { ...e.data, ...updates } } : e)
+  })),
   deleteConnection: (edgeId) => set(state => ({ edges: state.edges.filter(e => e.id !== edgeId) })),
+
+  addTextNode: (textNode) => set(state => ({ notes: [...state.notes, { ...textNode, id: Date.now().toString() }] })),
+  updateTextNode: (nodeId, updates) => set((state) => ({
+    notes: state.notes.map(n => n.id === nodeId ? { ...n, data: { ...n.data, ...updates } } : n)
+  })),
 
   addCollection: (name) => set(state => ({
     collections: [...state.collections, { id: Date.now(), name, boards: [] }]
